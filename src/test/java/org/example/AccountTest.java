@@ -1,4 +1,5 @@
 package org.example;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static io.restassured.RestAssured.given;
@@ -7,22 +8,19 @@ import static org.hamcrest.Matchers.equalTo;
 import java.util.*;
 
 public class AccountTest extends BaseTest {
-
     @Test
     @DisplayName("GetAccountImages")
     void GetAccountImages() {
         given()
                 .headers(headers)
                 .when()
-                .get((String) properties.get("imageUrl"))
-                .then()
-                .statusCode(200);
+                .get((String) properties.get("imageUrl"));
     }
 
     @Test
     @DisplayName("All image account_url matches given account")
     void getAccountImagesVerification() {
-        ArrayList<String> str = given()
+        List<ImageDTO> accountUrl = given()
                 .headers(headers)
                 .when()
                 .get((String) properties.get("imageUrl"))
@@ -30,25 +28,25 @@ public class AccountTest extends BaseTest {
                 .extract()
                 .response()
                 .jsonPath()
-                .get("data.account_url");
-        assertThat(str.stream().allMatch((i) -> Objects.equals(i, "elvinrain13")), equalTo(true));
+                .getList("data", ImageDTO.class);
+
+        assertThat(accountUrl.stream().allMatch((image) -> image.getAccount_url()
+                .equals(testUser.getAccount_url())), equalTo(true));
     }
 
     @Test
-    @DisplayName("Status code is 200")
+    @DisplayName("GetAccountSettings")
     void getAccountSettings() {
         given()
                 .headers(headers)
                 .when()
-                .get((String) properties.get("imageUrl"))
-                .then()
-                .statusCode(200);
+                .get((String) properties.get("imageUrl"));
     }
 
     @Test
     @DisplayName("Username is correct")
     void getAccountSettingsUserName() {
-        String url = given()
+        User url = given()
                 .headers(headers)
                 .when()
                 .get((String) properties.get("accountUrl"))
@@ -56,14 +54,15 @@ public class AccountTest extends BaseTest {
                 .extract()
                 .response()
                 .jsonPath()
-                .get("data.account_url");
-        assertThat(url, equalTo("elvinrain13"));
+                .getObject("data", User.class);
+
+        assertThat(url.account_url, equalTo(testUser.account_url));
     }
 
     @Test
     @DisplayName("User email is correct")
     void getAccountSettingsUserEmail() {
-        String email = given()
+        User email = given()
                 .headers(headers)
                 .when()
                 .get((String) properties.get("accountUrl"))
@@ -71,8 +70,9 @@ public class AccountTest extends BaseTest {
                 .extract()
                 .response()
                 .jsonPath()
-                .get("data.email");
-        assertThat(email, equalTo("elvinrain13@gmail.com"));
+                .getObject("data", User.class);
+
+        assertThat(email.email, equalTo(testUser.email));
     }
 
     @Test
@@ -81,9 +81,7 @@ public class AccountTest extends BaseTest {
         given()
                 .headers(headers)
                 .when()
-                .put(((String) properties.get("settingsUrl")),"elvinrain13")
-                .then()
-                .statusCode(200);
+                .put(((String) properties.get("settingsUrl")),testUser.account_url);
     }
 
     @Test
@@ -92,7 +90,7 @@ public class AccountTest extends BaseTest {
         given()
                 .headers(headers)
                 .when()
-                .put(((String) properties.get("settingsUrl")),"elvinrain13")
+                .put(((String) properties.get("settingsUrl")),testUser.account_url)
                 .then()
                 .body("success",equalTo(true));
     }

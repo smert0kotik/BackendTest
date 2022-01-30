@@ -2,7 +2,6 @@ package org.example;
 
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
-import io.restassured.response.Response;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static io.restassured.RestAssured.given;
@@ -10,12 +9,11 @@ import static io.restassured.config.EncoderConfig.encoderConfig;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
-import java.util.ArrayList;
-
+import java.util.List;
 
 public class AlbumTest extends BaseTest {
 
-    String createAlbumRequest() {
+    AlbumDTO createAlbumRequest() {
         return given()
                 .headers(headers)
                 .contentType("multipart/form-data")
@@ -23,101 +21,84 @@ public class AlbumTest extends BaseTest {
                 .when()
                 .request("POST", "https://api.imgur.com/3/album")
                 .then()
-                .statusCode(200)
                 .extract()
-                .response()
                 .jsonPath()
-                .getString("data.id");
+                .getObject("data", AlbumDTO.class);
     }
 
     @Test
     @DisplayName("Album is created")
     void PostAlbum() {
-        String albumHash = createAlbumRequest();
-        assertThat(albumHash, not(equalTo(null)));
+        AlbumDTO album = createAlbumRequest();
+        assertThat(album.getId(), not(equalTo(null)));
     }
 
     @Test
     @DisplayName("GetAlbum")
     void GetAlbum() {
-        String albumHash = createAlbumRequest();
-        Response response = given()
+        AlbumDTO album = createAlbumRequest();
+        AlbumDTO response = given()
                 .headers(headers)
                 .when()
-                .get("https://api.imgur.com/3/album/{albumHash}", albumHash)
+                .get("https://api.imgur.com/3/album/{albumHash}", album.getId())
                 .then()
                 .extract()
-                .response();
+                .response()
+                .jsonPath().getObject("data", AlbumDTO.class);
 
-        assertThat(response.statusCode(), equalTo(200));
-        assertThat(response.jsonPath().getString("data.title"), equalTo("new_album"));
+        assertThat(response.getTitle(), equalTo("new_album"));
     }
 
     @Test
     @DisplayName("GetAlbumImages")
     void GetAlbumImages() {
-        String albumHash = createAlbumRequest();
-        ArrayList<String> dataType = given()
+        AlbumDTO album = createAlbumRequest();
+        List<ImageDTO> dataType = given()
                 .headers(headers)
                 .when()
-                .get("https://api.imgur.com/3/album/{albumHash}/images", albumHash)
+                .get("https://api.imgur.com/3/album/{albumHash}/images", album.getId())
                 .then()
                 .extract()
                 .response()
                 .jsonPath()
-                .get("data.type");
+                .getList("data", ImageDTO.class);
 
-        assertThat(dataType.stream().allMatch((type) -> type.equals("image/jpeg")), equalTo(true));
+        assertThat(dataType.stream().allMatch((image) -> image.getType().equals("image/jpeg")), equalTo(true));
     }
 
     @Test
     @DisplayName("AddImagesToAlbum")
     void PostImagesToAlbum() {
-        String albumHash = createAlbumRequest();
-         Response response = given()
+        AlbumDTO album = createAlbumRequest();
+         given()
                  .config(
                  RestAssured.config()
                  .encoderConfig(encoderConfig()
                  .encodeContentTypeAs("multipart/form-data", ContentType.TEXT)))
-                .headers(headers)
-                .contentType("multipart/form-data")
+                 .headers(headers)
+                 .contentType("multipart/form-data")
                  .multiPart("ids[]", "fbnzTHv")
-                .when()
-                .request("POST", "https://api.imgur.com/3/album/{albumHash}/add", albumHash)
-                .then()
-                .extract()
-                .response();
-
-        assertThat(response.statusCode(), equalTo(200));
+                 .when()
+                 .request("POST", "https://api.imgur.com/3/album/{albumHash}/add", album.getId());
     }
 
     @Test
     @DisplayName("PostFavouriteAlbum")
     void PostFavouriteAlbum() {
-        String albumHash = createAlbumRequest();
-        Response response = given()
+        AlbumDTO album = createAlbumRequest();
+        given()
                 .headers(headers)
                 .when()
-                .request("POST", "https://api.imgur.com/3/album/{albumHash}/favorite", albumHash)
-                .then()
-                .extract()
-                .response();
-
-        assertThat(response.statusCode(), equalTo(200));
+                .request("POST", "https://api.imgur.com/3/album/{albumHash}/favorite", album.getId());
     }
 
     @Test
     @DisplayName("DeleteAlbum")
     void DeleteAlbum() {
-        String albumHash = createAlbumRequest();
-        int statusCode = given()
+        AlbumDTO album = createAlbumRequest();
+        given()
                 .headers(headers)
                 .when()
-                .delete("https://api.imgur.com/3/album/{albumHash}", albumHash)
-                .then()
-                .extract()
-                .response()
-                .statusCode();
-        assertThat(statusCode, equalTo(200));
+                .delete("https://api.imgur.com/3/album/{albumHash}", album.getId());
     }
 }

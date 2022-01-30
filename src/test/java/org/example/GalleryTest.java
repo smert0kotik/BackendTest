@@ -16,73 +16,58 @@ public class GalleryTest extends BaseTest {
         Response response = given()
                 .headers(headers)
                 .when()
-                .get("https://api.imgur.com/3/gallery/t/{tagName}", "wallpapers")
+                .get("https://api.imgur.com/3/gallery/t/{tagName}", testUser.tag)
                 .then()
                 .extract()
                 .response();
 
-        assertThat(response.statusCode(), equalTo(200));
-        assertThat(response.jsonPath().getString("data.name"), equalTo("wallpapers"));
+        assertThat(response.jsonPath().getString("data.name"), equalTo(testUser.tag));
     }
 
     @Test
     @DisplayName("GetGallerySearch")
 
     void GetGallerySearch() {
-        Response response = given()
+        given()
                 .headers(headers)
                 .when()
-                .get("https://api.imgur.com/3/gallery/search/?q_exactly=cats")
-                .then()
-                .extract()
-                .response();
-
-        assertThat(response.statusCode(), equalTo(200));
+                .get("https://api.imgur.com/3/gallery/search/?q_exactly=cats");
     }
 
     @Test
     @DisplayName("PostGalleryComment")
     void PostGalleryComment() {
-        Response response = given()
+        given()
                 .headers(headers)
                 .contentType("multipart/form-data")
                 .multiPart("comment", "test")
                 .when()
-                .request("POST","https://api.imgur.com/3/gallery/{galleryHash}/comment", "VQBUKqR")
-                .then()
-                .extract()
-                .response();
-
-        assertThat(response.statusCode(), equalTo(200));
+                .request("POST","https://api.imgur.com/3/gallery/{galleryHash}/comment",properties.get("galleryHash"));
     }
 
     @Test
     @DisplayName("GetGalleryComment")
     void GetGalleryComment() {
-        Response response = given()
+        User comment = given()
                 .headers(headers)
                 .when()
-                .get("https://api.imgur.com/3/gallery/{galleryHash}/comment/{commentId}", "VQBUKqR", "2187802841")
+                .get("https://api.imgur.com/3/gallery/{galleryHash}/comment/{commentId}",properties.get("galleryHash"),"2187802841")
                 .then()
                 .extract()
-                .response();
+                .response()
+                .jsonPath()
+                .getObject("data", User.class);
 
-        assertThat(response.statusCode(), equalTo(200));
-        assertThat(response.jsonPath().getString("data.author"), equalTo("elvinrain13"));
+        assertThat(comment.author, equalTo(testUser.account_url));
     }
 
     @Test
     @DisplayName("PostGalleryVote")
     void PostGalleryVote() {
-        Response response = given()
+        given()
                 .headers(headers)
                 .when()
-                .request("POST","https://api.imgur.com/3/gallery/{galleryHash}/vote/{vote}", "VQBUKqR", "up")
-                .then()
-                .extract()
-                .response();
-
-        assertThat(response.statusCode(), equalTo(200));
+                .request("POST","https://api.imgur.com/3/gallery/{galleryHash}/vote/{vote}",properties.get("galleryHash"),"up");
     }
 }
 

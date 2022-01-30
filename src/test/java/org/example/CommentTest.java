@@ -18,7 +18,6 @@ public class CommentTest extends BaseTest {
                 .when()
                 .request("POST", "https://api.imgur.com/3/comment")
                 .then()
-                .statusCode(200)
                 .extract()
                 .response()
                 .jsonPath()
@@ -36,14 +35,9 @@ public class CommentTest extends BaseTest {
     @DisplayName("Comment is deleted")
     void DeleteComment() {
         String commentId = createComment();
-        int statusCode = given()
+        given()
                 .headers(headers)
                 .when()
-                .delete("https://api.imgur.com/3/comment/{commentId}", commentId)
-                .then()
-                .extract()
-                .response()
-                .statusCode();
-        assertThat(statusCode, equalTo(200));
+                .delete("https://api.imgur.com/3/comment/{commentId}", commentId);
     }
 }

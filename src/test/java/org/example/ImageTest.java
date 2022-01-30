@@ -1,6 +1,5 @@
 package org.example;
 
-import io.restassured.response.Response;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import java.io.File;
@@ -22,7 +21,6 @@ public class ImageTest extends BaseTest {
                 .when()
                 .request("POST", "https://api.imgur.com/3/upload")
                 .then()
-                .statusCode(200)
                 .extract()
                 .response()
                 .jsonPath()
@@ -41,45 +39,30 @@ public class ImageTest extends BaseTest {
     @DisplayName("GetImage")
     void GetImage() {
         String imageHash = uploadImage();
-        Response response = given()
+        given()
                 .headers(headers)
                 .when()
-                .get((String) properties.get("imageHashUrl"), imageHash)
-                .then()
-                .extract()
-                .response();
-
-        assertThat(response.statusCode(), equalTo(200));
+                .get((String) properties.get("imageHashUrl"), imageHash);
     }
 
     @Test
     @DisplayName("PostUpdateImage")
     void PostUpdateImage() {
         String imageHash = uploadImage();
-        Response response = given()
+        given()
                 .headers(headers)
                 .when()
-                .post((String) properties.get("imageHashUrl"), imageHash)
-                .then()
-                .extract()
-                .response();
-
-        assertThat(response.statusCode(), equalTo(200));
+                .post((String) properties.get("imageHashUrl"), imageHash);
     }
 
     @Test
     @DisplayName("DeleteImage")
     void DeleteImage() {
         String imageHash = uploadImage();
-        int statusCode = given()
+        given()
                 .headers(headers)
                 .when()
-                .delete((String) properties.get("imageHashUrl"), imageHash)
-                .then()
-                .extract()
-                .response()
-                .statusCode();
-        assertThat(statusCode, equalTo(200));
+                .delete((String) properties.get("imageHashUrl"), imageHash);
         }
     }
 
